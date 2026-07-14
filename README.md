@@ -1,7 +1,6 @@
-<<<<<<< HEAD
 # DataMind AI (AI Data Analyst)
 
-DataMind AI is an advanced, full-stack AI Data Analysis platform that empowers users to upload datasets, discover insights, and build machine learning models—all through an intuitive dashboard and natural language queries.
+DataMind AI is an end-to-end AI-powered data analytics platform that turns raw datasets into actionable insights. It empowers users to upload datasets, discover insights, and build machine learning models—all through an intuitive dashboard and natural language queries.
 
 ## 🚀 Features
 
@@ -41,7 +40,11 @@ DataMind AI is an advanced, full-stack AI Data Analysis platform that empowers u
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+# On Windows:
+venv\Scripts\activate
+# On Mac/Linux:
+source venv/bin/activate
+
 pip install -r requirements.txt
 python app.py
 ```
@@ -76,7 +79,3 @@ npm run build
 
 ## 📝 License
 This project is licensed under the MIT License.
-=======
-# Data-Mind-AI
-An end-to-end AI-powered data analytics platform that turns raw datasets into actionable insights 
->>>>>>> 0ad51871bc22c543599d1a25907e254ddb3b44bc
