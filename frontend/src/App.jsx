@@ -5,7 +5,36 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, ScatterChart, Scatter
 } from 'recharts';
 
-const API_BASE = import.meta.env.VITE_API_BASE || "/api";
+const API_BASE = import.meta.env.VITE_API_BASE
+  || (import.meta.env.VITE_BACKEND_URL ? `${import.meta.env.VITE_BACKEND_URL}/api` : "/api");
+
+/**
+ * Safely extract a human-readable error message from any axios/JS error.
+ * Prevents [object Object] from appearing in the UI.
+ */
+function extractError(error) {
+  // CORS / network failure — error.response is undefined
+  if (!error.response) {
+    if (error.message === 'Network Error') {
+      return 'Cannot reach the server. This may be a CORS issue or the backend is offline. Check that the backend URL is correct and the server is running.';
+    }
+    return error.message || 'Unknown network error';
+  }
+
+  const data = error.response.data;
+
+  // Server returned a JSON error field
+  if (data) {
+    if (typeof data.error === 'string') return data.error;
+    if (typeof data.message === 'string') return data.message;
+    if (typeof data.error === 'object') return JSON.stringify(data.error);
+    if (typeof data === 'string') return data;
+    return JSON.stringify(data);
+  }
+
+  return `Server error ${error.response.status}`;
+}
+
 
 function App() {
   const [file, setFile] = useState(null);
@@ -101,7 +130,7 @@ function App() {
       // On mobile, switch to data panel after upload
       setMobilePanel('data');
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'ai', content: 'Upload failed: ' + (error.response?.data?.error || error.message) }]);
+      setMessages(prev => [...prev, { role: 'ai', content: `❌ Upload failed: ${extractError(error)}` }]);
     } finally {
       setIsProcessing(false);
     }
@@ -146,7 +175,7 @@ function App() {
       setMessages(prev => [...prev, { role: 'ai', content: `✅ ${response.data.message}` }]);
       setActiveTool(null);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'ai', content: `Operation failed: ${error.response?.data?.error || error.message}` }]);
+      setMessages(prev => [...prev, { role: 'ai', content: `❌ Operation failed: ${extractError(error)}` }]);
     } finally {
       setIsProcessing(false);
     }
@@ -160,7 +189,7 @@ function App() {
       setMessages(prev => [...prev, { role: 'ai', content: `✅ ${response.data.message}` }]);
       setActiveTool(null);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'ai', content: `CRUD operation failed: ${error.response?.data?.error || error.message}` }]);
+      setMessages(prev => [...prev, { role: 'ai', content: `❌ CRUD failed: ${extractError(error)}` }]);
     } finally {
       setIsProcessing(false);
     }
@@ -568,7 +597,7 @@ function App() {
                       const res = await axios.post(`${API_BASE}/cluster`, { clusters: k });
                       setDataSummary(res.data.summary);
                       setMessages(prev => [...prev, { role: 'ai', content: `✅ ${res.data.message}` }]);
-                    } catch (err) { setMessages(prev => [...prev, { role: 'ai', content: `❌ Clustering failed: ${err.response?.data?.error || err.message}` }]); }
+                    } catch (err) { setMessages(prev => [...prev, { role: 'ai', content: `❌ Clustering failed: ${extractError(err)}` }]); }
                   }} style={{ flex: 1 }} disabled={!dataSummary}>Run K-Means</button>
                 </div>
               </div>
@@ -579,7 +608,7 @@ function App() {
                   try {
                     const res = await axios.post(`${API_BASE}/compare`, { target: predictionTarget });
                     setProResults({ ...proResults, comparison: res.data.results });
-                  } catch (err) { setMessages(prev => [...prev, { role: 'ai', content: `❌ Comparison failed: ${err.response?.data?.error || err.message}` }]); }
+                  } catch (err) { setMessages(prev => [...prev, { role: 'ai', content: `❌ Comparison failed: ${extractError(err)}` }]); }
                 }} style={{ width: '100%' }} disabled={!dataSummary}>Run Leaderboard</button>
                 {proResults.comparison && (
                   <div style={{ marginTop: '1rem', fontSize: '0.75rem' }}>
@@ -605,7 +634,7 @@ function App() {
                     const res = await axios.post(`${API_BASE}/undo`);
                     setDataSummary(res.data.summary);
                     setMessages(prev => [...prev, { role: 'ai', content: `↩️ ${res.data.message}` }]);
-                  } catch (err) { setMessages(prev => [...prev, { role: 'ai', content: `Cannot undo: ${err.response?.data?.error || err.message}` }]); }
+                  } catch (err) { setMessages(prev => [...prev, { role: 'ai', content: `❌ Cannot undo: ${extractError(err)}` }]); }
                 }}
                 disabled={!dataSummary}
               >↩ Undo</button>
@@ -617,7 +646,7 @@ function App() {
                     setDataSummary(res.data.summary);
                     setMessages(prev => [...prev, { role: 'ai', content: `🧹 ${res.data.message}` }]);
                     fetchAdvancedInsights();
-                  } catch (err) { setMessages(prev => [...prev, { role: 'ai', content: `Clean failed: ${err.response?.data?.error || err.message}` }]); }
+                  } catch (err) { setMessages(prev => [...prev, { role: 'ai', content: `❌ Clean failed: ${extractError(err)}` }]); }
                 }}
                 disabled={!dataSummary}
               >🧹 Clean</button>
@@ -630,7 +659,7 @@ function App() {
                     const res = await axios.post(`${API_BASE}/sort`, { column: col, ascending: true });
                     setDataSummary(res.data.summary);
                     setMessages(prev => [...prev, { role: 'ai', content: `📊 ${res.data.message}` }]);
-                  } catch (err) { setMessages(prev => [...prev, { role: 'ai', content: `Sort failed: ${err.response?.data?.error || err.message}` }]); }
+                  } catch (err) { setMessages(prev => [...prev, { role: 'ai', content: `❌ Sort failed: ${extractError(err)}` }]); }
                 }}
                 disabled={!dataSummary}
               >↕ Sort</button>

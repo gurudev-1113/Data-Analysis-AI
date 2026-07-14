@@ -22,7 +22,17 @@ import base64
 import matplotlib.pyplot as plt
 
 app = Flask(__name__)
-CORS(app)
+
+# Open CORS — allows any origin including Vercel, localhost, custom domains.
+# This is safe for a stateless ML API with no user authentication.
+# The FRONTEND_URL env var is kept for informational purposes / future auth.
+CORS(app,
+     resources={r"/api/*": {"origins": "*"}},
+     allow_headers=["Content-Type", "Accept"],
+     methods=["GET", "POST", "OPTIONS"],
+     supports_credentials=False,
+     max_age=86400)
+
 plt.switch_backend('Agg')
 
 current_df = None
