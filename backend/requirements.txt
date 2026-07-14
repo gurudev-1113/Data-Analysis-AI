@@ -2,11 +2,9 @@ flask
 flask-cors
 pandas
 openpyxl
-xlrd>=2.0.1
-XlsxWriter
 scikit-learn
 numpy
 matplotlib
 seaborn
-fpdf
+fpdf2
 gunicorn

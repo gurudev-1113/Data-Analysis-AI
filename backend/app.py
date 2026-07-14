@@ -1,9 +1,6 @@
 import os
 import tempfile
-# Use a writable cache dir that works on all platforms (local, Docker, cloud)
-_mpl_cache = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.matplotlib_cache')
-os.makedirs(_mpl_cache, exist_ok=True)
-os.environ['MPLCONFIGDIR'] = _mpl_cache
+os.environ['MPLCONFIGDIR'] = os.path.join(tempfile.gettempdir(), 'matplotlib')
 
 import pandas as pd
 import numpy as np
@@ -22,17 +19,7 @@ import base64
 import matplotlib.pyplot as plt
 
 app = Flask(__name__)
-
-# Open CORS — allows any origin including Vercel, localhost, custom domains.
-# This is safe for a stateless ML API with no user authentication.
-# The FRONTEND_URL env var is kept for informational purposes / future auth.
-CORS(app,
-     resources={r"/api/*": {"origins": "*"}},
-     allow_headers=["Content-Type", "Accept"],
-     methods=["GET", "POST", "OPTIONS"],
-     supports_credentials=False,
-     max_age=86400)
-
+CORS(app)
 plt.switch_backend('Agg')
 
 current_df = None
@@ -76,24 +63,12 @@ def upload_file():
     
     file = request.files["file"]
     try:
-        filename = file.filename.lower()
-        if filename.endswith(".csv"):
+        if file.filename.endswith(".csv"):
             current_df = pd.read_csv(file)
-        elif filename.endswith(".xlsx"):
-            current_df = pd.read_excel(file, engine='openpyxl')
-        elif filename.endswith(".xls"):
-            current_df = pd.read_excel(file, engine='xlrd')
+        elif file.filename.endswith((".xls", ".xlsx")):
+            current_df = pd.read_excel(file)
         else:
-            # Try to detect by MIME type as fallback
-            mime = file.content_type or ''
-            if 'spreadsheet' in mime or 'excel' in mime or 'officedocument' in mime:
-                try:
-                    current_df = pd.read_excel(file, engine='openpyxl')
-                except Exception:
-                    file.seek(0)
-                    current_df = pd.read_excel(file, engine='xlrd')
-            else:
-                return jsonify({"error": "Unsupported file format. Please upload a CSV (.csv) or Excel (.xlsx, .xls) file."}), 400
+            return jsonify({"error": "Unsupported file format. Use CSV or Excel."}), 400
         
         current_df.columns = [c.strip() for c in current_df.columns]
         history_stack = []  # Reset history on new upload
@@ -565,8 +540,9 @@ def download_pdf():
                         pdf.cell(190, 8, f"- {corr.columns[i]} & {corr.columns[j]}: {corr.iloc[i,j]:.2f}", ln=True)
         
         output = io.BytesIO()
-        pdf_str = pdf.output(dest='S').encode('latin-1')
-        output.write(pdf_str)
+        pdf_raw = pdf.output()
+        pdf_bytes = pdf_raw if isinstance(pdf_raw, (bytes, bytearray)) else pdf_raw.encode('latin-1')
+        output.write(bytes(pdf_bytes))
         output.seek(0)
         
         return send_file(output, mimetype="application/pdf", as_attachment=True, download_name="DataMind_Report.pdf")
