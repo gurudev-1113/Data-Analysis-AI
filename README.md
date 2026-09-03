@@ -1,3 +1,4 @@
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/bea447d1-2365-42bb-a470-5e86ead97234" />
 # DataMind AI (AI Data Analyst)
 
 DataMind AI is an end-to-end AI-powered data analytics platform that turns raw datasets into actionable insights. It empowers users to upload datasets, discover insights, and build machine learning models—all through an intuitive dashboard and natural language queries.
