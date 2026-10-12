@@ -8,3 +8,7 @@ matplotlib
 seaborn
 fpdf2
 gunicorn
+pyjwt
+sqlitecloud
+statsmodels
+scipy
